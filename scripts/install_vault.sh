@@ -486,7 +486,10 @@ install_vault () {
         sudo systemctl status vault
 
         echo vault started
-        sleep 15 
+        sleep 15
+        sudo systemctl status vault
+        sudo VAULT_TOKEN=reallystrongpassword VAULT_ADDR="http://${IP}:8200" vault status
+
         
         #copy token to known location
         echo "reallystrongpassword" > /usr/local/bootstrap/.vault-token
