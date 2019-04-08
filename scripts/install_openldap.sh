@@ -39,7 +39,7 @@ install_openldap () {
 ETC_HOSTS=/etc/hosts
 
 # DEFAULT IP FOR HOSTNAME
-IP="192.168.3.10"
+IP="192.168.2.11"
 
 # Hostname to add/remove.
 HOSTNAME="allthingscloud.eu"
@@ -50,3 +50,5 @@ install_openldap
 sudo slapcat
 sudo ldapadd -x -D cn=admin,dc=eu -w bananas -f /usr/local/bootstrap/conf/slapd.ldif
 ldapsearch -x -LLL -h localhost -D "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -w passwordd -b "cn=Ronan Keating,ou=people,dc=allthingscloud,dc=eu" -s sub "(objectClass=inetOrgPerson)" carlicense
+ldapsearch -x -LLL -h localhost -D "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -w passwordd -b "cn=vault,ou=groups,dc=allthingscloud,dc=eu"
+ldapsearch -x -LLL -h localhost -D "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -w passwordd -b "ou=people,dc=allthingscloud,dc=eu"

@@ -16,36 +16,17 @@ o: Allthingscloud, Inc.
 ## uses mixed upper and lower case for objectclass
 # this is an ENTRY sequence and is preceded by a BLANK line
 
-dn: ou=people, dc=allthingscloud,dc=eu
+dn: ou=people,dc=allthingscloud,dc=eu
 ou: people
 description: All people in organisation
 objectclass: organizationalunit
 
-dn: ou=TeamA,dc=allthingscloud,dc=eu
-ou: TeamA
-objectClass: organizationalUnit
-description: Team A Working Group
+dn: ou=groups,dc=allthingscloud,dc=eu
+ou: groups
+description: All groups within the organisation
+objectclass: organizationalunit
 
-dn: ou=TeamB,dc=allthingscloud,dc=eu
-ou: TeamB
-objectClass: organizationalUnit
-description: Team B Working Group
-
-dn: ou=TeamC,dc=allthingscloud,dc=eu
-ou: TeamC
-objectClass: organizationalUnit
-description: Team C Working Group
-
-dn: ou=TeamD,dc=allthingscloud,dc=eu
-ou: TeamD
-objectClass: organizationalUnit
-description: Team D Working Group
-
-## SECOND Level hierarchy
-## ADD a single entry under FIRST (people) level
-# this is an ENTRY sequence and is preceded by a BLANK line
-# the ou: Human Resources is the department name
-
+# Add some users
 dn: cn=Mary Poppins,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
 cn: Mary Poppins
@@ -57,7 +38,6 @@ carlicense: POP IN5
 homephone: 555-111-2222
 mail: pop@allthingscloud.eu
 description: Children's Favourite
-ou: TeamA
 
 dn: cn=Ronan Keating,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
@@ -70,7 +50,6 @@ carlicense: R0 N4N
 homephone: 555-111-3333
 mail: ronnie@allthingscloud.eu
 description: Irish Pop Star
-ou: TeamB
 
 dn: cn=Dylan Thomas,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
@@ -83,7 +62,6 @@ carlicense: DTH0 M4S
 homephone: 555-111-4444
 mail: dthomas@allthingscloud.eu
 description: Welsh Poet
-ou: TeamC
 
 dn: cn=Dawn French,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
@@ -96,7 +74,48 @@ carlicense: DFR 3NCH
 homephone: 555-111-5555
 mail: dfrench@allthingscloud.eu
 description: English Comedian
-ou: TeamD
+
+# Add the teams
+dn: cn=TeamA,ou=groups,dc=allthingscloud,dc=eu
+cn: TeamA
+objectClass: groupOfNames
+objectClass: top
+description: Team A Working Group
+member: uid=dfrench,ou=people,dc=allthingscloud,dc=eu
+
+dn: cn=TeamB,ou=groups,dc=allthingscloud,dc=eu
+cn: TeamB
+objectClass: groupOfNames
+objectClass: top
+description: Team B Working Group
+member: uid=rkeating,ou=people,dc=allthingscloud,dc=eu
+
+dn: cn=TeamC,ou=groups,dc=allthingscloud,dc=eu
+cn: TeamC
+objectClass: groupOfNames
+objectClass: top
+description: Team C Working Group
+member: uid=dthomas,ou=people,dc=allthingscloud,dc=eu
+
+dn: cn=TeamD,ou=groups,dc=allthingscloud,dc=eu
+cn: TeamD
+objectClass: groupOfNames
+objectClass: top
+description: Team D Working Group
+member: uid=dfrench,ou=people,dc=allthingscloud,dc=eu
+
+# Add the Vault Group
+dn: cn=vault,ou=groups,dc=allthingscloud, dc=eu
+cn: vault
+description: All vault users within the organisation
+objectClass: groupOfNames
+objectClass: top
+member: cn=TeamA,ou=groups,dc=allthingscloud,dc=eu
+member: cn=TeamB,ou=groups,dc=allthingscloud,dc=eu
+member: cn=TeamC,ou=groups,dc=allthingscloud,dc=eu
+
+
+
 
 # ldapwhoami -vvv -h localhost -p 389 -D "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -x -w password
 # ldapsearch -x -LLL -h localhost -D "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -w password -b "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -s sub "(objectClass=inetOrgPerson)" carlicense
