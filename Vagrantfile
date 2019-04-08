@@ -7,6 +7,11 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
+  config.vm.synced_folder ".", "/vagrant"
+  config.vm.synced_folder ".", "/usr/local/bootstrap"
+  config.vm.hostname = "allthingscloud.eu"
+  config.vm.provision "shell", inline: "/usr/local/bootstrap/scripts/install_openldap.sh", run: "always"
+  config.vm.network "private_network", ip: "192.168.3.10"
   config.vm.box = "allthingscloud/web-page-counter"
   config.vm.box_version = "0.2.1554410947"
 
