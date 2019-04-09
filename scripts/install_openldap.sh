@@ -83,6 +83,9 @@ install_and_configure_openldap () {
 
     fi
 
+    # Check LDAP server is listening on port 389
+    nc localhost 389 -v -z
+
 }
 
 setup_environment() {
