@@ -75,6 +75,22 @@ homephone: 555-111-5555
 mail: dfrench@allthingscloud.eu
 description: English Comedian
 
+dn: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
+objectclass: inetOrgPerson
+cn: vaultuser
+sn: vaultuser
+uid: vaultuser
+userpassword: vaultuser
+description: Account used to bind with Vault
+
+dn: cn=oktauser,ou=people,dc=allthingscloud,dc=eu
+objectclass: inetOrgPerson
+cn: oktauser
+sn: oktauser
+uid: oktauser
+userpassword: oktauser
+description: Account used to bind with Okta Agent for MFA
+
 # Add the teams
 dn: cn=TeamA,ou=groups,dc=allthingscloud,dc=eu
 cn: TeamA
@@ -113,6 +129,7 @@ objectClass: top
 member: cn=TeamA,ou=groups,dc=allthingscloud,dc=eu
 member: cn=TeamB,ou=groups,dc=allthingscloud,dc=eu
 member: cn=TeamC,ou=groups,dc=allthingscloud,dc=eu
+member: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
 
 
 

@@ -1,0 +1,7 @@
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: memberof.la
+
+olcRootDN: cn=admin,dc=eu
+olcRootPW: {SSHA}/T2a4Vk8/QcbFotoPt1XU8sGEkje2x8a
