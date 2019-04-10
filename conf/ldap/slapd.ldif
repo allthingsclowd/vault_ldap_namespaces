@@ -97,28 +97,28 @@ cn: TeamA
 objectClass: groupOfNames
 objectClass: top
 description: Team A Working Group
-member: uid=dfrench,ou=people,dc=allthingscloud,dc=eu
+member: cn=Mary Poppins,ou=people,dc=allthingscloud,dc=eu
 
 dn: cn=TeamB,ou=groups,dc=allthingscloud,dc=eu
 cn: TeamB
 objectClass: groupOfNames
 objectClass: top
 description: Team B Working Group
-member: uid=rkeating,ou=people,dc=allthingscloud,dc=eu
+member: cn=Ronan Keating,ou=people,dc=allthingscloud,dc=eu
 
 dn: cn=TeamC,ou=groups,dc=allthingscloud,dc=eu
 cn: TeamC
 objectClass: groupOfNames
 objectClass: top
 description: Team C Working Group
-member: uid=dthomas,ou=people,dc=allthingscloud,dc=eu
+member: cn=Dylan Thomas,ou=people,dc=allthingscloud,dc=eu
 
 dn: cn=TeamD,ou=groups,dc=allthingscloud,dc=eu
 cn: TeamD
 objectClass: groupOfNames
 objectClass: top
 description: Team D Working Group
-member: uid=dfrench,ou=people,dc=allthingscloud,dc=eu
+member: cn=Dawn French,ou=people,dc=allthingscloud,dc=eu
 
 # Add the Vault Group
 dn: cn=vault,ou=groups,dc=allthingscloud, dc=eu

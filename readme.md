@@ -18,6 +18,8 @@ Setup four teams A - D in LDAP and add a user in each team as follows:
     - Team C: Dylan Thomas
     - Team D: Dawn French
 
+[Useful LDAP Explorer for the MacOS](https://directory.apache.org/studio/download/download-macosx.html)
+
 Within Vault create a namespace for each team.
 A shared namespace should exist for Team A & Team B.
 
