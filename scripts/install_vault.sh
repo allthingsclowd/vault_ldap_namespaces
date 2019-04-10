@@ -77,17 +77,25 @@ setup_environment () {
     sudo mkdir -p /mnt/vault/data
     sudo chmod 777 /mnt/vault/data
 
-    # check vault binary
-    [ -f /usr/local/bin/vault ] &>/dev/null || {
-        pushd /usr/local/bin
-        [ -f vault_${vault_version}_linux_amd64.zip ] || {
-            sudo wget -q https://releases.hashicorp.com/vault/${vault_version}/vault_${vault_version}_linux_amd64.zip
-        }
-        sudo unzip vault_${vault_version}_linux_amd64.zip
-        sudo chmod +x vault
-        sudo rm vault_${vault_version}_linux_amd64.zip
-        popd
-    }
+    # # check vault binary
+    # [ -f /usr/local/bin/vault ] &>/dev/null || {
+    #     pushd /usr/local/bin
+    #     [ -f vault_${vault_version}_linux_amd64.zip ] || {
+    #         sudo wget -q https://releases.hashicorp.com/vault/${vault_version}/vault_${vault_version}_linux_amd64.zip
+    #     }
+    #     sudo unzip vault_${vault_version}_linux_amd64.zip
+    #     sudo chmod +x vault
+    #     sudo rm vault_${vault_version}_linux_amd64.zip
+    #     popd
+    # }
+    
+    # Install Enterprise Binary
+    pushd /usr/local/bin
+    sudo unzip -o ../../hsm/vault-enterprise_1.1.0+prem_linux_amd64.zip
+    sudo chmod +x vault
+    sudo rm vault_${vault_version}_linux_amd64.zip
+    popd
+    
 
 
     echo 'End Setup of Vault Environment'
