@@ -38,6 +38,7 @@ carlicense: POP IN5
 homephone: 555-111-2222
 mail: pop@allthingscloud.eu
 description: Children's Favourite
+ou: TeamA
 
 dn: cn=Ronan Keating,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
@@ -50,6 +51,7 @@ carlicense: R0 N4N
 homephone: 555-111-3333
 mail: ronnie@allthingscloud.eu
 description: Irish Pop Star
+ou: TeamB
 
 dn: cn=Dylan Thomas,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
@@ -62,6 +64,7 @@ carlicense: DTH0 M4S
 homephone: 555-111-4444
 mail: dthomas@allthingscloud.eu
 description: Welsh Poet
+ou: TeamC
 
 dn: cn=Dawn French,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
@@ -74,6 +77,7 @@ carlicense: DFR 3NCH
 homephone: 555-111-5555
 mail: dfrench@allthingscloud.eu
 description: English Comedian
+ou: TeamD
 
 dn: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
@@ -82,6 +86,7 @@ sn: vaultuser
 uid: vaultuser
 userpassword: vaultuser
 description: Account used to bind with Vault
+ou: vault
 
 dn: cn=oktauser,ou=people,dc=allthingscloud,dc=eu
 objectclass: inetOrgPerson
@@ -120,16 +125,14 @@ objectClass: top
 description: Team D Working Group
 member: cn=Dawn French,ou=people,dc=allthingscloud,dc=eu
 
-# Add the Vault Group
+# Add the Vault Admin Group
 dn: cn=vault,ou=groups,dc=allthingscloud, dc=eu
 cn: vault
 description: All vault users within the organisation
 objectClass: groupOfNames
 objectClass: top
-member: cn=TeamA,ou=groups,dc=allthingscloud,dc=eu
-member: cn=TeamB,ou=groups,dc=allthingscloud,dc=eu
-member: cn=TeamC,ou=groups,dc=allthingscloud,dc=eu
 member: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
+
 
 
 
@@ -137,3 +140,7 @@ member: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
 # ldapwhoami -vvv -h localhost -p 389 -D "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -x -w password
 # ldapsearch -x -LLL -h localhost -D "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -w password -b "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -s sub "(objectClass=inetOrgPerson)" carlicense
 # ldapsearch -x -LLL -h localhost -D "cn=Dawn French,ou=people,dc=allthingscloud,dc=eu" -w password -b "cn=Ronan Keating,ou=people,dc=allthingscloud,dc=eu" -s sub "(objectClass=inetOrgPerson)" carlicense
+# ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(objectClass=inetOrgPerson)"
+# ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=*))"
+# ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=*))" memberOf
+# ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf

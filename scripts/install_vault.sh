@@ -8,10 +8,9 @@ create_vault_policy () {
     if [[ ${POLICY_EXISTS} != "200" ]]; then
         # Create new vault policy
         echo "Vault policy ${3} is being created"
-            
             # if the policy filename contains namespace then we us ${5} as the namespace to be inserted into the policy
             if [[ ${4} == *"namespace"* ]]; then
-                sed "s/path \"/path \"${5}\//g" ${4}  > /tmp/temppolicy.json
+                sed 's/path \\"/path \\"'${5}'\//g' ${4}  > /tmp/temppolicy.json
             else
                 cp ${4} /tmp/temppolicy.json
             fi
@@ -42,18 +41,156 @@ create_vault_policy () {
 
 create_vault_policies () {
     create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} vaultAdmin /usr/local/bootstrap/conf/vault_root_admin_policy.json ROOT
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} TeamAAdmin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json TeamA
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} TeamBAdmin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json TeamB
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} TeamCAdmin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json TeamC
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} TeamDAdmin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json TeamD
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} TeamAOperator /usr/local/bootstrap/conf/vault_namespace_operator_policy.json TeamA
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} TeamBOperator /usr/local/bootstrap/conf/vault_namespace_operator_policy.json TeamB
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} TeamCOperator /usr/local/bootstrap/conf/vault_namespace_operator_policy.json TeamC
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} TeamDOperator /usr/local/bootstrap/conf/vault_namespace_operator_policy.json TeamD
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${APP_TEAMA_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${APP_TEAMA_NAMESPACE}
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${APP_TEAMB_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${APP_TEAMB_NAMESPACE}
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${SHARED_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${SHARED_NAMESPACE}
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${SHARED_NAMESPACE}_operator /usr/local/bootstrap/conf/vault_namespace_operator_policy.json ${SHARED_NAMESPACE}
+
+
 }
 
+assign_vault_policies() {
+    
+    assign_policy_to_namespace_to_internal_group TeamA ${APP_TEAMA_NAMESPACE} "_Full_Access" ${APP_TEAMA_NAMESPACE}_admin
+    assign_policy_to_namespace_to_internal_group TeamA ${SHARED_NAMESPACE} "_Limited_Shared_Access" ${SHARED_NAMESPACE}_operator
+    assign_policy_to_namespace_to_internal_group TeamB ${APP_TEAMB_NAMESPACE} "_Full_Access" ${APP_TEAMB_NAMESPACE}_admin
+    assign_policy_to_namespace_to_internal_group TeamB ${SHARED_NAMESPACE} "_Limited_Shared_Access" ${SHARED_NAMESPACE}_operator
+    assign_policy_to_namespace_to_internal_group TeamC ${SHARED_NAMESPACE} "_Full_Access" ${SHARED_NAMESPACE}_admin
+    
+}
+
+assign_policy_to_namespace_to_internal_group () {
+
+    GROUP_ID=`curl \
+                -X GET \
+                -s \
+                -H "X-Vault-Token: ${VAULT_TOKEN}" \
+                ${VAULT_ADDR}/v1/identity/group/name/${1} | jq -r ".data.id"`
+
+    curl \
+        -X PUT \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        -H "X-Vault-Namespace: ${1}/" \
+        -d "{\"member_group_ids\":\"${GROUP_ID}\",\"name\":\"${1}${3}\",\"policies\":\"${4}\"}" \
+        ${VAULT_ADDR}/v1/identity/group    
+}
+
+create_external_ldap_group_identities() {
+   LDAP_ACCESSOR=`curl \
+        -s \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        ${VAULT_ADDR}/v1/sys/auth | jq -r ".[\"${LDAP_ENDPOINT}/\"].accessor"`
+
+    for GROUP in $LDAP_GROUPS ;
+        do
+            NEW_GROUP_ID=`curl \
+                -X PUT \
+                -s \
+                -H "X-Vault-Token: ${VAULT_TOKEN}" \
+                -d "{\"name\":\"${GROUP}\",\"type\":\"external\"}" \
+                ${VAULT_ADDR}/v1/identity/group | jq -r ".data.id"`
+
+            curl -X PUT \
+                -s \
+                -H "X-Vault-Token: ${VAULT_TOKEN}" \
+                -d "{\"canonical_id\":\"${NEW_GROUP_ID}\",\"mount_accessor\":\"${LDAP_ACCESSOR}\",\"name\":\"${GROUP}\"}" \
+                ${VAULT_ADDR}/v1/identity/group-alias         
+        
+        done
+}
+
+configure_vault_ldap () {
+
+    # Check existing ldap configuration
+
+    ENDPOINT_ENABLED=`curl \
+        -I \
+        -o /dev/null \
+        -s \
+        -w "%{http_code}\n" \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        ${VAULT_ADDR}/v1/auth/${LDAP_ENDPOINT}/config`
+
+    if [[ ${ENDPOINT_ENABLED} != "200" ]]; then
+        echo "Enabling LDAP Authentication Backend /v1/auth/${LDAP_ENDPOINT}"
+        
+        # Enable new Vault LDAP Backend
+        LDAPBACKENDCONFIG='{
+        "type": "ldap",
+        "description": "Login with OpenLDAP Server"
+        }'
+
+        curl \
+            -H "X-Vault-Token: ${VAULT_TOKEN}" \
+            -X POST \
+            -d "${LDAPBACKENDCONFIG}" \
+            ${VAULT_ADDR}/v1/sys/auth/${LDAP_ENDPOINT}
+        
+        export LDAPCONFIG='{"binddn":"cn=vaultuser,ou=people,dc=allthingscloud,dc=eu","bindpass":"vaultuser","groupattr":"memberOf","groupdn":"ou=people,dc=allthingscloud,dc=eu","groupfilter":"(&(objectClass=inetOrgPerson)(uid={{.Username}}))","insecure_tls":"true","starttls":"false","upndomain":"allthingscloud.eu","url":"ldap://192.168.2.11:389","userattr":"uid","userdn":"ou=people,dc=allthingscloud,dc=eu"}'
+
+        curl \
+            -X PUT \
+            -H "X-Vault-Token: ${VAULT_TOKEN}" \
+            -d ${LDAPCONFIG} \
+            ${VAULT_ADDR}/v1/auth/${LDAP_ENDPOINT}/config
 
 
+    else
+        echo "LDAP Authentication Backend /v1/auth/${LDAP_ENDPOINT} is already enabled with the following configuration"
+
+        # Check for config associated with new demo path
+        curl \
+            -X GET \
+            -H "X-Vault-Token: ${VAULT_TOKEN}" \
+            ${VAULT_ADDR}/v1/auth/${LDAP_ENDPOINT}/config
+
+
+    fi
+
+
+    LDAP_VERIFICATION=`curl \
+        -o /dev/null \
+        -s \
+        -w "%{http_code}\n" \
+        -X PUT \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        -d "{\"password\":\"${LDAP_TESTPASSWORD}\"}" \
+        ${VAULT_ADDR}/v1/auth/${LDAP_ENDPOINT}/login/${LDAP_TESTUSER}`
+
+    if [[ ${LDAP_VERIFICATION} != "200" ]]; then
+        echo "LDAP User Vault Authentication Verification Failed"
+    else
+        echo "LDAP User Vault Authentication Verification Successful"
+    fi
+
+}
+
+create_namespaces () {
+
+    for NAMESPACE in $VAULT_NAMESPACES ;
+        do
+            NAMESPACE_EXISTS=`curl \
+                -o /dev/null \
+                -s \
+                -w "%{http_code}\n" \
+                -H "X-Vault-Token: ${VAULT_TOKEN}" \
+                ${VAULT_ADDR}/v1/sys/namespaces/${NAMESPACE}`
+            
+            if [[ ${NAMESPACE_EXISTS} != "200" ]]; then
+                echo "Creating new namespace ${NAMESPACE}"
+                curl \
+                    -H "X-Vault-Token: ${VAULT_TOKEN}" \
+                    -X POST \
+                    -s \
+                    ${VAULT_ADDR}/v1/sys/namespaces/${NAMESPACE}
+
+            else
+                echo "Namespace ${NAMESPACE} already exists"
+            fi
+
+        done
+
+}
 
 create_service () {
 
@@ -165,28 +302,6 @@ revoke_root_token () {
     echo 'Vault Root Token Revocation Complete'    
 }
 
-
-bootstrap_secret_data () {
-    
-    echo 'Set environmental bootstrapping data in VAULT'
-    REDIS_MASTER_PASSWORD=`openssl rand -base64 32`
-    APPROLEID=`cat /usr/local/bootstrap/.appRoleID`
-    DB_VAULT_TOKEN=`cat /usr/local/bootstrap/.database-token`
-    AGENTTOKEN=`cat /usr/local/bootstrap/.agenttoken_acl`
-    WRAPPEDPROVISIONERTOKEN=`cat /usr/local/bootstrap/.wrapped-provisioner-token`
-    BOOTSTRAPACL=`cat /usr/local/bootstrap/.bootstrap_acl`
-    # Put Redis Password in Vault
-    sudo VAULT_ADDR="http://${IP}:8200" vault login ${ADMIN_TOKEN}
-    # FAILS???? sudo VAULT_TOKEN=${ADMIN_TOKEN} VAULT_ADDR="http://${IP}:8200" vault policy list
-    sudo VAULT_TOKEN=${ADMIN_TOKEN} VAULT_ADDR="http://${IP}:8200" vault kv put kv/development/redispassword value=${REDIS_MASTER_PASSWORD}
-    sudo VAULT_TOKEN=${ADMIN_TOKEN} VAULT_ADDR="http://${IP}:8200" vault kv put kv/development/consulagentacl value=${AGENTTOKEN}
-    sudo VAULT_TOKEN=${ADMIN_TOKEN} VAULT_ADDR="http://${IP}:8200" vault kv put kv/development/vaultdbtoken value=${DB_VAULT_TOKEN}
-    sudo VAULT_TOKEN=${ADMIN_TOKEN} VAULT_ADDR="http://${IP}:8200" vault kv put kv/development/approleid value=${APPROLEID}
-    sudo VAULT_TOKEN=${ADMIN_TOKEN} VAULT_ADDR="http://${IP}:8200" vault kv put kv/development/wrappedprovisionertoken value=${WRAPPEDPROVISIONERTOKEN}
-    sudo VAULT_TOKEN=${ADMIN_TOKEN} VAULT_ADDR="http://${IP}:8200" vault kv put kv/development/bootstraptoken value=${BOOTSTRAPACL}
-
-}
-
 install_vault () {
     
     
@@ -220,7 +335,6 @@ install_vault () {
         export VAULT_ADDR="http://${IP}:8200"
         vault status
 
-        
         #copy token to known location
         echo "reallystrongpassword" > /usr/local/bootstrap/.vault-token
         sudo chmod ugo+r /usr/local/bootstrap/.vault-token
@@ -232,7 +346,11 @@ install_vault () {
 }
 
 install_vault
+create_namespaces
+configure_vault_ldap
 create_vault_policies
+create_external_ldap_group_identities
+assign_vault_policies
 
 exit 0
     
