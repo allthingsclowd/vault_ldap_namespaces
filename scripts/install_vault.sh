@@ -125,6 +125,8 @@ configure_vault_ldap () {
             -X POST \
             -d "${LDAPBACKENDCONFIG}" \
             ${VAULT_ADDR}/v1/sys/auth/${LDAP_ENDPOINT}
+
+        # To test you LDAP config outside of Vault => ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf
         
         export LDAPCONFIG='{"binddn":"cn=vaultuser,ou=people,dc=allthingscloud,dc=eu","bindpass":"vaultuser","groupattr":"memberOf","groupdn":"ou=people,dc=allthingscloud,dc=eu","groupfilter":"(&(objectClass=inetOrgPerson)(uid={{.Username}}))","insecure_tls":"true","starttls":"false","upndomain":"allthingscloud.eu","url":"ldap://192.168.2.11:389","userattr":"uid","userdn":"ou=people,dc=allthingscloud,dc=eu"}'
 
