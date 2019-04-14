@@ -28,6 +28,8 @@ objectclass: organizationalunit
 
 # Add some users
 dn: cn=Mary Poppins,ou=people,dc=allthingscloud,dc=eu
+objectclass: person
+objectclass: organizationalPerson
 objectclass: inetOrgPerson
 cn: Mary Poppins
 cn: Marge Poppins
@@ -38,9 +40,11 @@ carlicense: POP IN5
 homephone: 555-111-2222
 mail: pop@allthingscloud.eu
 description: Children's Favourite
-ou: TeamA
+ou: groups
 
 dn: cn=Ronan Keating,ou=people,dc=allthingscloud,dc=eu
+objectclass: person
+objectclass: organizationalPerson
 objectclass: inetOrgPerson
 cn: Ronan Keating
 cn: Ronnie K
@@ -51,9 +55,11 @@ carlicense: R0 N4N
 homephone: 555-111-3333
 mail: ronnie@allthingscloud.eu
 description: Irish Pop Star
-ou: TeamB
+ou: groups
 
 dn: cn=Dylan Thomas,ou=people,dc=allthingscloud,dc=eu
+objectclass: person
+objectclass: organizationalPerson
 objectclass: inetOrgPerson
 cn: Dylan Thomas
 cn: Dickie Tee
@@ -64,9 +70,11 @@ carlicense: DTH0 M4S
 homephone: 555-111-4444
 mail: dthomas@allthingscloud.eu
 description: Welsh Poet
-ou: TeamC
+ou: groups
 
 dn: cn=Dawn French,ou=people,dc=allthingscloud,dc=eu
+objectclass: person
+objectclass: organizationalPerson
 objectclass: inetOrgPerson
 cn: Dawn French
 cn: D Frenchy
@@ -77,24 +85,29 @@ carlicense: DFR 3NCH
 homephone: 555-111-5555
 mail: dfrench@allthingscloud.eu
 description: English Comedian
-ou: TeamD
+ou: groups
 
 dn: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
+objectclass: person
+objectclass: organizationalPerson
 objectclass: inetOrgPerson
 cn: vaultuser
 sn: vaultuser
 uid: vaultuser
 userpassword: vaultuser
 description: Account used to bind with Vault
-ou: vault
+ou: groups
 
 dn: cn=oktauser,ou=people,dc=allthingscloud,dc=eu
+objectclass: person
+objectclass: organizationalPerson
 objectclass: inetOrgPerson
 cn: oktauser
 sn: oktauser
 uid: oktauser
 userpassword: oktauser
 description: Account used to bind with Okta Agent for MFA
+ou: groups
 
 # Add the teams
 dn: cn=TeamA,ou=groups,dc=allthingscloud,dc=eu
@@ -103,6 +116,7 @@ objectClass: groupOfNames
 objectClass: top
 description: Team A Working Group
 member: cn=Mary Poppins,ou=people,dc=allthingscloud,dc=eu
+ou: groups
 
 dn: cn=TeamB,ou=groups,dc=allthingscloud,dc=eu
 cn: TeamB
@@ -110,6 +124,7 @@ objectClass: groupOfNames
 objectClass: top
 description: Team B Working Group
 member: cn=Ronan Keating,ou=people,dc=allthingscloud,dc=eu
+ou: groups
 
 dn: cn=TeamC,ou=groups,dc=allthingscloud,dc=eu
 cn: TeamC
@@ -117,6 +132,7 @@ objectClass: groupOfNames
 objectClass: top
 description: Team C Working Group
 member: cn=Dylan Thomas,ou=people,dc=allthingscloud,dc=eu
+ou: groups
 
 dn: cn=TeamD,ou=groups,dc=allthingscloud,dc=eu
 cn: TeamD
@@ -124,6 +140,7 @@ objectClass: groupOfNames
 objectClass: top
 description: Team D Working Group
 member: cn=Dawn French,ou=people,dc=allthingscloud,dc=eu
+ou: groups
 
 # Add the Vault Admin Group
 dn: cn=vault,ou=groups,dc=allthingscloud, dc=eu
@@ -132,6 +149,7 @@ description: All vault users within the organisation
 objectClass: groupOfNames
 objectClass: top
 member: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
+ou: groups
 
 
 
@@ -144,3 +162,5 @@ member: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
 # ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=*))"
 # ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=*))" memberOf
 # ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf
+
+# vault write auth/mydemoldapserver/groups/TeamA policies=facebook_admin

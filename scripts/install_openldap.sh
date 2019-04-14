@@ -55,6 +55,9 @@ install_and_configure_openldap () {
         # Restart LDAP Server Service
         sudo systemctl restart slapd.service
 
+        # Enbale LDAP logging
+        sudo ldapmodify -w ${LDAPPASSWORD} -D cn=admin,cn=config -f /usr/local/bootstrap/conf/ldap/enableLDAPlogs.ldif
+
         # Enable memberOf overlay - easily and efficiently do queries that enables you to see which users are part of which groups 
         echo "Enabling LDAP memberOf Overlay"
         sudo ldapadd -w ${LDAPPASSWORD} -D cn=admin,cn=config -f /usr/local/bootstrap/conf/ldap/memberOfmodule.ldif

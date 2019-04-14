@@ -45,9 +45,21 @@ create_vault_policies () {
     create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${APP_TEAMB_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${APP_TEAMB_NAMESPACE}
     create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${SHARED_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${SHARED_NAMESPACE}
     create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${SHARED_NAMESPACE}_operator /usr/local/bootstrap/conf/vault_namespace_operator_policy.json ${SHARED_NAMESPACE}
-
+    # assign_vault_ldap_group_to_policy TeamA ${APP_TEAMA_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator
+    # assign_vault_ldap_group_to_policy TeamB ${APP_TEAMB_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator
+    # assign_vault_ldap_group_to_policy TeamC ${SHARED_NAMESPACE}_admin
+    # assign_vault_ldap_group_to_policy TeamD vaultAdmin,${APP_TEAMA_NAMESPACE}_admin,${APP_TEAMB_NAMESPACE}_admin,${SHARED_NAMESPACE}_admin
 
 }
+
+assign_vault_ldap_group_to_policy () {
+    curl \
+        -X PUT \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        -d '{"policies":"'${2}'"}' \
+        ${VAULT_ADDR}/v1/auth/${LDAP_ENDPOINT}/groups/${1}
+}
+
 
 assign_vault_policies() {
     
@@ -56,21 +68,25 @@ assign_vault_policies() {
     assign_policy_to_namespace_to_internal_group TeamB ${APP_TEAMB_NAMESPACE} "_Full_Access" ${APP_TEAMB_NAMESPACE}_admin
     assign_policy_to_namespace_to_internal_group TeamB ${SHARED_NAMESPACE} "_Limited_Shared_Access" ${SHARED_NAMESPACE}_operator
     assign_policy_to_namespace_to_internal_group TeamC ${SHARED_NAMESPACE} "_Full_Access" ${SHARED_NAMESPACE}_admin
+    assign_policy_to_namespace_to_internal_group TeamD ${SHARED_NAMESPACE} "_Full_Access" ${SHARED_NAMESPACE}_admin
+    assign_policy_to_namespace_to_internal_group TeamD ${APP_TEAMA_NAMESPACE} "_Full_Access" ${APP_TEAMA_NAMESPACE}_admin
+    assign_policy_to_namespace_to_internal_group TeamD ${APP_TEAMB_NAMESPACE} "_Full_Access" ${APP_TEAMB_NAMESPACE}_admin
     
 }
 
 assign_policy_to_namespace_to_internal_group () {
 
     GROUP_ID=`curl \
-                -X GET \
+                -X PUT \
                 -s \
                 -H "X-Vault-Token: ${VAULT_TOKEN}" \
-                ${VAULT_ADDR}/v1/identity/group/name/${1} | jq -r ".data.id"`
+                -d "{\"name\":\"${1}\",\"type\":\"internal\"}" \
+                ${VAULT_ADDR}/v1/identity/group | jq -r ".data.id"`
 
     curl \
         -X PUT \
         -H "X-Vault-Token: ${VAULT_TOKEN}" \
-        -H "X-Vault-Namespace: ${1}/" \
+        -H "X-Vault-Namespace: ${2}/" \
         -d "{\"member_group_ids\":\"${GROUP_ID}\",\"name\":\"${1}${3}\",\"policies\":\"${4}\"}" \
         ${VAULT_ADDR}/v1/identity/group    
 }
@@ -126,9 +142,9 @@ configure_vault_ldap () {
             -d "${LDAPBACKENDCONFIG}" \
             ${VAULT_ADDR}/v1/sys/auth/${LDAP_ENDPOINT}
 
-        # To test you LDAP config outside of Vault => ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf
+        # To test you LDAP config outside of Vault => ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf ///(&(objectClass=inetOrgPerson)(uid={{.Username}}))
         
-        export LDAPCONFIG='{"binddn":"cn=vaultuser,ou=people,dc=allthingscloud,dc=eu","bindpass":"vaultuser","groupattr":"memberOf","groupdn":"ou=people,dc=allthingscloud,dc=eu","groupfilter":"(&(objectClass=inetOrgPerson)(uid={{.Username}}))","insecure_tls":"true","starttls":"false","upndomain":"allthingscloud.eu","url":"ldap://192.168.2.11:389","userattr":"uid","userdn":"ou=people,dc=allthingscloud,dc=eu"}'
+        export LDAPCONFIG='{"binddn":"cn=vaultuser,ou=people,dc=allthingscloud,dc=eu","bindpass":"vaultuser","groupattr":"memberOf","groupdn":"ou=people,dc=allthingscloud,dc=eu","groupfilter":"(&(objectClass=inetOrgPerson)(uid={{.Username}}))","insecure_tls":"true","starttls":"false","url":"ldap://192.168.2.11:389","userattr":"uid","userdn":"ou=people,dc=allthingscloud,dc=eu"}'
 
         curl \
             -X PUT \
@@ -281,10 +297,21 @@ setup_environment () {
     
     # Install Enterprise Binary
     pushd /usr/local/bin
-    sudo unzip -o /usr/local/bootstrap/.hsm/vault-enterprise_1.1.0+prem_linux_amd64.zip
+    sudo unzip -o /usr/local/bootstrap/.hsm/vault-enterprise_1.1.1+prem_linux_amd64.zip
     sudo chmod +x vault
     popd
     
+    # # Install OSS Binary
+    # pushd /usr/local/bin
+    # [ -f vault_1.1.1_linux_amd64.zip ] || {
+    #     sudo wget -q https://releases.hashicorp.com/vault/1.1.1/vault_1.1.1_linux_amd64.zip
+    # }
+    # sudo unzip -o vault_1.1.1_linux_amd64.zip
+    # sudo chmod +x vault
+    # sudo rm vault_1.1.1_linux_amd64.zip
+    # popd
+
+
     echo 'End Setup of Vault Environment Prerequisites'
 }
 
@@ -326,7 +353,7 @@ install_vault () {
 
         #start vault
 
-        create_service vault "HashiCorp's Sercret Management Service" "/usr/local/bin/vault server -dev -dev-root-token-id="reallystrongpassword" -dev-listen-address=${IP}:8200 -config=/usr/local/bootstrap/conf/vault.d/vault.hcl"
+        create_service vault "HashiCorp's Sercret Management Service" "/usr/local/bin/vault server -log-level=debug -dev -dev-root-token-id=reallystrongpassword -dev-listen-address=${IP}:8200 -config=/usr/local/bootstrap/conf/vault.d/vault.hcl"
         sudo systemctl start vault
         sudo systemctl status vault
 
