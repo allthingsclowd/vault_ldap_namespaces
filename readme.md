@@ -1,4 +1,4 @@
-# Vault Namespaces with LDAP
+# Vault LDAP Integration into Root Namespace - Configuring Additional Namespaces
 
 This repository has been created to evaluate the integration of HashiCorp Vault Namespaces with OpenLDAP (and eventually OKTA's MFA).
 
