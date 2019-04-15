@@ -48,7 +48,7 @@ create_vault_policies () {
     # assign_vault_ldap_group_to_policy TeamA ${APP_TEAMA_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator
     # assign_vault_ldap_group_to_policy TeamB ${APP_TEAMB_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator
     # assign_vault_ldap_group_to_policy TeamC ${SHARED_NAMESPACE}_admin
-    # assign_vault_ldap_group_to_policy TeamD vaultAdmin,${APP_TEAMA_NAMESPACE}_admin,${APP_TEAMB_NAMESPACE}_admin,${SHARED_NAMESPACE}_admin
+    assign_vault_ldap_group_to_policy TeamD vaultAdmin
 
 }
 
