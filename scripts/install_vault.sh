@@ -48,7 +48,7 @@ create_vault_policies () {
     # assign_vault_ldap_group_to_policy TeamA ${APP_TEAMA_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator
     # assign_vault_ldap_group_to_policy TeamB ${APP_TEAMB_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator
     # assign_vault_ldap_group_to_policy TeamC ${SHARED_NAMESPACE}_admin
-    assign_vault_ldap_group_to_policy TeamD vaultAdmin
+    # assign_vault_ldap_group_to_policy TeamD vaultAdmin
 
 }
 
@@ -63,14 +63,10 @@ assign_vault_ldap_group_to_policy () {
 
 assign_vault_policies() {
     
-    assign_policy_to_namespace_to_internal_group TeamA ${APP_TEAMA_NAMESPACE} "_Full_Access" ${APP_TEAMA_NAMESPACE}_admin
-    assign_policy_to_namespace_to_internal_group TeamA ${SHARED_NAMESPACE} "_Limited_Shared_Access" ${SHARED_NAMESPACE}_operator
-    assign_policy_to_namespace_to_internal_group TeamB ${APP_TEAMB_NAMESPACE} "_Full_Access" ${APP_TEAMB_NAMESPACE}_admin
-    assign_policy_to_namespace_to_internal_group TeamB ${SHARED_NAMESPACE} "_Limited_Shared_Access" ${SHARED_NAMESPACE}_operator
-    assign_policy_to_namespace_to_internal_group TeamC ${SHARED_NAMESPACE} "_Full_Access" ${SHARED_NAMESPACE}_admin
-    assign_policy_to_namespace_to_internal_group TeamD ${SHARED_NAMESPACE} "_Full_Access" ${SHARED_NAMESPACE}_admin
-    assign_policy_to_namespace_to_internal_group TeamD ${APP_TEAMA_NAMESPACE} "_Full_Access" ${APP_TEAMA_NAMESPACE}_admin
-    assign_policy_to_namespace_to_internal_group TeamD ${APP_TEAMB_NAMESPACE} "_Full_Access" ${APP_TEAMB_NAMESPACE}_admin
+    assign_policy_in_root_namespace_to_external_group TeamA "${APP_TEAMA_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator"
+    assign_policy_in_root_namespace_to_external_group TeamB "${APP_TEAMB_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator"
+    assign_policy_in_root_namespace_to_external_group TeamC ${SHARED_NAMESPACE}_admin
+    assign_policy_in_root_namespace_to_external_group TeamD "${SHARED_NAMESPACE}_admin,vaultAdmin,${APP_TEAMA_NAMESPACE}_admin,${APP_TEAMB_NAMESPACE}_admin"
     
 }
 
@@ -113,6 +109,21 @@ create_external_ldap_group_identities() {
                 ${VAULT_ADDR}/v1/identity/group-alias         
         
         done
+}
+
+assign_policy_in_root_namespace_to_external_group () {
+
+    GROUP_ID=`curl \
+                -X GET \
+                -s \
+                -H "X-Vault-Token: ${VAULT_TOKEN}" \
+                ${VAULT_ADDR}/v1/identity/group/name/${1} | jq -r ".data.id"`
+
+    curl \
+        -X PUT \
+        -H "X-Vault-Token: ${VAULT_TOKEN}" \
+        -d "{\"name\":\"${1}\",\"policies\":\"${2}\"}" \
+        ${VAULT_ADDR}/v1/identity/group    
 }
 
 configure_vault_ldap () {

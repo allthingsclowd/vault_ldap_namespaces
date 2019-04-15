@@ -57,6 +57,7 @@ Check Vault LDAP setup as follows on the vagrant box (Note: LDAP path has been s
 source var.env
 vault login -method=ldap -path=mydemoldapserver username=dfrench
 ```
+
 Output:
 
 ``` bash
