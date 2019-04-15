@@ -63,10 +63,10 @@ assign_vault_ldap_group_to_policy () {
 
 assign_vault_policies() {
     
-    assign_policy_in_root_namespace_to_external_group TeamA "${APP_TEAMA_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator"
-    assign_policy_in_root_namespace_to_external_group TeamB "${APP_TEAMB_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator"
-    assign_policy_in_root_namespace_to_external_group TeamC ${SHARED_NAMESPACE}_admin
-    assign_policy_in_root_namespace_to_external_group TeamD "${SHARED_NAMESPACE}_admin,vaultAdmin,${APP_TEAMA_NAMESPACE}_admin,${APP_TEAMB_NAMESPACE}_admin"
+    assign_policy_in_root_namespace_to_external_group TeamA "\"${APP_TEAMA_NAMESPACE}_admin\",\"${SHARED_NAMESPACE}_operator\""
+    assign_policy_in_root_namespace_to_external_group TeamB "\"${APP_TEAMB_NAMESPACE}_admin\",\"${SHARED_NAMESPACE}_operator\""
+    assign_policy_in_root_namespace_to_external_group TeamC "\"${SHARED_NAMESPACE}_admin\""
+    assign_policy_in_root_namespace_to_external_group TeamD "\"${SHARED_NAMESPACE}_admin\",\"vaultAdmin\",\"${APP_TEAMA_NAMESPACE}_admin\",\"${APP_TEAMB_NAMESPACE}_admin\""
     
 }
 
@@ -122,8 +122,8 @@ assign_policy_in_root_namespace_to_external_group () {
     curl \
         -X PUT \
         -H "X-Vault-Token: ${VAULT_TOKEN}" \
-        -d "{\"name\":\"${1}\",\"policies\":\"${2}\"}" \
-        ${VAULT_ADDR}/v1/identity/group    
+        -d "{\"policies\":[${2}]}" \
+        ${VAULT_ADDR}/v1/identity/group/id/${GROUP_ID}   
 }
 
 configure_vault_ldap () {
