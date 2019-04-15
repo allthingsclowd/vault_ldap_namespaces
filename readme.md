@@ -49,20 +49,41 @@ Lightweight Directory Access Protocol (LDAP) Directory Information Tree (DIT) ca
 Check LDAP setup by running the following command on the vagrant box:
 
 ``` bash
-ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf
+ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=*))" memberOf
 ```
+Output:
+``` bash
+dn: cn=Mary Poppins,ou=people,dc=allthingscloud,dc=eu
+memberOf: cn=TeamA,ou=groups,dc=allthingscloud,dc=eu
 
-Check Vault LDAP setup as follows on the vagrant box (Note: LDAP path has been set to a non standard mydemoldapserver):
+dn: cn=Ronan Keating,ou=people,dc=allthingscloud,dc=eu
+memberOf: cn=TeamB,ou=groups,dc=allthingscloud,dc=eu
+
+dn: cn=Dylan Thomas,ou=people,dc=allthingscloud,dc=eu
+memberOf: cn=TeamC,ou=groups,dc=allthingscloud,dc=eu
+
+dn: cn=Dawn French,ou=people,dc=allthingscloud,dc=eu
+memberOf: cn=TeamD,ou=groups,dc=allthingscloud,dc=eu
+
+dn: cn=vaultuser,ou=people,dc=allthingscloud,dc=eu
+memberOf: cn=vault,ou=groups,dc=allthingscloud,dc=eu
+
+dn: cn=oktauser,ou=people,dc=allthingscloud,dc=eu
+```
+If the LDAP query does not return memberOf that contains the correct groups then verify that the filter is configured correctly - e.g. `(&(objectClass=inetOrgPerson)(uid=*))`
+
+Vault's LDAP setup can be verified as follows on the vagrant box
+##(Note: LDAP path has been set to a non standard mydemoldapserver)##
 
 ``` bash
 source var.env
-vault login -method=ldap -path=mydemoldapserver username=dfrench
+vault login -method=ldap -path=mydemoldapserver username=mpoppins
 ```
 
 Output:
 
 ``` bash
-Password (will be hidden): passwordd
+Password (will be hidden): passworda
 WARNING! The VAULT_TOKEN environment variable is set! This takes precedence
 over the value set by this command. To use the value set by this command,
 unset the VAULT_TOKEN environment variable or set it to the token displayed
@@ -74,20 +95,20 @@ again. Future Vault requests will automatically use this token.
 
 Key                    Value
 ---                    -----
-token                  s.I9eyhwCVlyw0jyeZEVb7C9tS
-token_accessor         1QpkpxyOvLH3CnvloT3FHU11
+token                  s.P0SKQFmbMLBlNeqLaPPHL9ci
+token_accessor         XHh14VYhfMwroutTE2FLpbG6
 token_duration         768h
 token_renewable        true
-token_policies         ["default" "vaultadmin"]
-identity_policies      []
-policies               ["default" "vaultadmin"]
-token_meta_username    dfrench
+token_policies         ["default"]
+identity_policies      ["facebook_admin" "shared_operator"]
+policies               ["default" "facebook_admin" "shared_operator"]
+token_meta_username    mpoppins
 ```
 
-Check the assigned policies - 
+Review the token details: 
 
 ``` bash
-vault token lookup s.I9eyhwCVlyw0jyeZEVb7C9tS
+vault token lookup s.P0SKQFmbMLBlNeqLaPPHL9ci
 ```
 
 Output:
@@ -95,24 +116,24 @@ Output:
 ``` bash
 Key                            Value
 ---                            -----
-accessor                       1QpkpxyOvLH3CnvloT3FHU11
-creation_time                  1555258470
+accessor                       XHh14VYhfMwroutTE2FLpbG6
+creation_time                  1555366376
 creation_ttl                   768h
-display_name                   mydemoldapserver-dfrench
-entity_id                      883aa416-3ba4-ab14-6e6d-d34f4c001e01
-expire_time                    2019-05-16T16:14:30.872451102Z
+display_name                   mydemoldapserver-mpoppins
+entity_id                      11bd523d-26a8-6f0e-d1a4-0ea4113a1c7e
+expire_time                    2019-05-17T22:12:56.292121251Z
 explicit_max_ttl               0s
-external_namespace_policies    map[oGKtV:[facebook_admin] 1ILtu:[twitter_admin] 6SWkG:[shared_admin]]
-id                             s.I9eyhwCVlyw0jyeZEVb7C9tS
-identity_policies              <nil>
-issue_time                     2019-04-14T16:14:30.872450878Z
-meta                           map[username:dfrench]
+external_namespace_policies    map[]
+id                             s.P0SKQFmbMLBlNeqLaPPHL9ci
+identity_policies              [facebook_admin shared_operator]
+issue_time                     2019-04-15T22:12:56.292120972Z
+meta                           map[username:mpoppins]
 num_uses                       0
 orphan                         true
-path                           auth/mydemoldapserver/login/dfrench
-policies                       [default vaultadmin]
+path                           auth/mydemoldapserver/login/mpoppins
+policies                       [default]
 renewable                      true
-ttl                            767h59m32s
+ttl                            767h58m49s
 type                           service
 ```
 
