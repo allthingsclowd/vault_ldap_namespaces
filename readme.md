@@ -42,6 +42,7 @@ vagrant ssh
 ```
 
 [Useful LDAP Explorer for the MacOS](https://directory.apache.org/studio/download/download-macosx.html)
+![image](https://user-images.githubusercontent.com/9472095/56169273-8b39bb00-5fd5-11e9-8fa5-e7a0e93cb081.png)
 
 Lightweight Directory Access Protocol (LDAP) Directory Information Tree (DIT) can be seen in the slapd.ldif file.
 ![Vault LDAP Demo LDIF (1)](https://user-images.githubusercontent.com/9472095/56167790-0ba9ed00-5fd1-11e9-9669-b455c0ba44d0.png)
