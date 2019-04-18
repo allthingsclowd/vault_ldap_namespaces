@@ -3,31 +3,38 @@
 
 create_vault_policy () {
     
-    POLICY_EXISTS=`curl -s -X GET -I -H "X-Vault-Token: reallystrongpassword" -w "%{http_code}\n" -o /dev/null http://192.168.2.11:8200/v1/sys/policies/acl/${3}` 
+    if [[ "${5}" != "" ]]; then
+        POLICY_EXISTS=`curl -s -X GET -I -H "X-Vault-Token: reallystrongpassword" -H "X-Vault-Namespace: ${5}" -w "%{http_code}\n" -o /dev/null http://192.168.2.11:8200/v1/sys/policies/acl/${3}`
+    else
+        POLICY_EXISTS=`curl -s -X GET -I -H "X-Vault-Token: reallystrongpassword" -w "%{http_code}\n" -o /dev/null http://192.168.2.11:8200/v1/sys/policies/acl/${3}`
+    fi
+    
     
     if [[ ${POLICY_EXISTS} != "200" ]]; then
         # Create new vault policy
         echo "Vault policy ${3} is being created"
-            # if the policy filename contains namespace then we us ${5} as the namespace to be inserted into the policy
-            if [[ ${4} == *"namespace"* ]]; then
+            # if the policy for the namespace is to live in the root namespace then we us ${5} as the namespace to be inserted into the policy
+            if [[ "${6}" == *"LOCAL"* ]] && [[ "${5}" != "" ]]; then
                 sed 's/path \\"/path \\"'${5}'\//g' ${4}  > /tmp/temppolicy.json
+                             
+                curl \
+                    -H "X-Vault-Token: reallystrongpassword" \
+                    -X PUT \
+                    -d @/tmp/temppolicy.json \
+                    ${2}/v1/sys/policies/acl/${3}
             else
                 cp ${4} /tmp/temppolicy.json
+
+                curl \
+                    -H "X-Vault-Token: reallystrongpassword" \
+                    -H "X-Vault-Namespace: ${5}" \
+                    -X PUT \
+                    -d @/tmp/temppolicy.json \
+                    ${2}/v1/sys/policies/acl/${3}
             fi
-
-            echo "Creating ${3} vault policy from the following file - "
-            cat /tmp/temppolicy.json 
             
-            curl \
-            --header "X-Vault-Token: ${1}" \
-            --request PUT \
-            --data @/tmp/temppolicy.json \
-            ${2}/v1/sys/policies/acl/${3}
-            
-            DEMO_TOKEN=`sudo VAULT_TOKEN=$1 VAULT_ADDR=$2 vault token create -policy=$3 -field=token`
-            sudo echo -n ${DEMO_TOKEN} > /usr/local/bootstrap/.${3}.token
-            sudo chmod ugo+r /usr/local/bootstrap/.${3}.token
-
+            echo "Created ${3} vault policy from the following file - "
+            cat /tmp/temppolicy.json
             rm /tmp/temppolicy.json
 
     else
@@ -39,16 +46,12 @@ create_vault_policy () {
 
 }
 
-create_vault_policies () {
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} vaultAdmin /usr/local/bootstrap/conf/vault_root_admin_policy.json ROOT
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${APP_TEAMA_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${APP_TEAMA_NAMESPACE}
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${APP_TEAMB_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${APP_TEAMB_NAMESPACE}
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${SHARED_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${SHARED_NAMESPACE}
-    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${SHARED_NAMESPACE}_operator /usr/local/bootstrap/conf/vault_namespace_operator_policy.json ${SHARED_NAMESPACE}
-    # assign_vault_ldap_group_to_policy TeamA ${APP_TEAMA_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator
-    # assign_vault_ldap_group_to_policy TeamB ${APP_TEAMB_NAMESPACE}_admin,${SHARED_NAMESPACE}_operator
-    # assign_vault_ldap_group_to_policy TeamC ${SHARED_NAMESPACE}_admin
-    # assign_vault_ldap_group_to_policy TeamD vaultAdmin
+create_vault_policies_for_namespace () {
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} vaultAdmin /usr/local/bootstrap/conf/vault_root_admin_policy.json "" "LOCAL"
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${APP_TEAMA_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${APP_TEAMA_NAMESPACE} "REMOTE"
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${APP_TEAMB_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${APP_TEAMB_NAMESPACE} "REMOTE"
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${SHARED_NAMESPACE}_admin /usr/local/bootstrap/conf/vault_namespace_admin_policy.json ${SHARED_NAMESPACE} "LOCAL"
+    create_vault_policy ${VAULT_TOKEN} ${VAULT_ADDR} ${SHARED_NAMESPACE}_operator /usr/local/bootstrap/conf/vault_namespace_operator_policy.json ${SHARED_NAMESPACE} "LOCAL"
 
 }
 
@@ -63,27 +66,33 @@ assign_vault_ldap_group_to_policy () {
 
 assign_vault_policies() {
     
-    assign_policy_in_root_namespace_to_external_group TeamA "\"${APP_TEAMA_NAMESPACE}_admin\",\"${SHARED_NAMESPACE}_operator\""
-    assign_policy_in_root_namespace_to_external_group TeamB "\"${APP_TEAMB_NAMESPACE}_admin\",\"${SHARED_NAMESPACE}_operator\""
-    assign_policy_in_root_namespace_to_external_group TeamC "\"${SHARED_NAMESPACE}_admin\""
-    assign_policy_in_root_namespace_to_external_group TeamD "\"${SHARED_NAMESPACE}_admin\",\"vaultAdmin\",\"${APP_TEAMA_NAMESPACE}_admin\",\"${APP_TEAMB_NAMESPACE}_admin\""
+    # Link policies directly to the external Groups that match the LDAP groups - these policies all live in the root namespace
+    assign_policy_in_root_namespace_to_external_group External_LDAP_Group_TeamA "\"${SHARED_NAMESPACE}_operator\""
+    assign_policy_in_root_namespace_to_external_group External_LDAP_Group_TeamB "\"${SHARED_NAMESPACE}_operator\""
+    assign_policy_in_root_namespace_to_external_group External_LDAP_Group_TeamC "\"${SHARED_NAMESPACE}_admin\""
+    assign_policy_in_root_namespace_to_external_group External_LDAP_Group_TeamD "\"${SHARED_NAMESPACE}_admin\",\"vaultAdmin\",\"${APP_TEAMA_NAMESPACE}_admin\",\"${APP_TEAMB_NAMESPACE}_admin\""
+    
+    # Link policies to an internal group in their respective namespaces - these policies will live in the particular namespace
+    assign_policy_to_namespace_to_internal_group TeamA ${APP_TEAMA_NAMESPACE} ${APP_TEAMA_NAMESPACE}_admin
+    
+    # Rinse & Repeat for the second namespace with local policies
+    assign_policy_to_namespace_to_internal_group TeamB ${APP_TEAMB_NAMESPACE} ${APP_TEAMB_NAMESPACE}_admin
     
 }
 
 assign_policy_to_namespace_to_internal_group () {
-
-    GROUP_ID=`curl \
-                -X PUT \
+    # Read the external groupID to map as a member to the newly created internal group
+    EXTERNAL_GROUP_ID=`curl \
+                -X GET \
                 -s \
                 -H "X-Vault-Token: ${VAULT_TOKEN}" \
-                -d "{\"name\":\"${1}\",\"type\":\"internal\"}" \
-                ${VAULT_ADDR}/v1/identity/group | jq -r ".data.id"`
+                ${VAULT_ADDR}/v1/identity/group/name/External_LDAP_Group_${1} | jq -r ".data.id"`
 
     curl \
         -X PUT \
         -H "X-Vault-Token: ${VAULT_TOKEN}" \
         -H "X-Vault-Namespace: ${2}/" \
-        -d "{\"member_group_ids\":\"${GROUP_ID}\",\"name\":\"${1}${3}\",\"policies\":\"${4}\"}" \
+        -d "{\"member_group_ids\":\"${EXTERNAL_GROUP_ID}\",\"name\":\"${1}\",\"policies\":\"${3}\"}" \
         ${VAULT_ADDR}/v1/identity/group    
 }
 
@@ -99,7 +108,7 @@ create_external_ldap_group_identities() {
                 -X PUT \
                 -s \
                 -H "X-Vault-Token: ${VAULT_TOKEN}" \
-                -d "{\"name\":\"${GROUP}\",\"type\":\"external\"}" \
+                -d "{\"name\":\"External_LDAP_Group_${GROUP}\",\"type\":\"external\"}" \
                 ${VAULT_ADDR}/v1/identity/group | jq -r ".data.id"`
 
             curl -X PUT \
@@ -108,7 +117,9 @@ create_external_ldap_group_identities() {
                 -d "{\"canonical_id\":\"${NEW_GROUP_ID}\",\"mount_accessor\":\"${LDAP_ACCESSOR}\",\"name\":\"${GROUP}\"}" \
                 ${VAULT_ADDR}/v1/identity/group-alias         
         
-        done
+        done    
+        
+
 }
 
 assign_policy_in_root_namespace_to_external_group () {
@@ -153,7 +164,7 @@ configure_vault_ldap () {
             -d "${LDAPBACKENDCONFIG}" \
             ${VAULT_ADDR}/v1/sys/auth/${LDAP_ENDPOINT}
 
-        # To test you LDAP config outside of Vault => ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf ///(&(objectClass=inetOrgPerson)(uid={{.Username}}))
+        # To test you LDAP config outside of Vault => ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf
         
         export LDAPCONFIG='{"binddn":"cn=vaultuser,ou=people,dc=allthingscloud,dc=eu","bindpass":"vaultuser","groupattr":"memberOf","groupdn":"ou=people,dc=allthingscloud,dc=eu","groupfilter":"(&(objectClass=inetOrgPerson)(uid={{.Username}}))","insecure_tls":"true","starttls":"false","url":"ldap://192.168.2.11:389","userattr":"uid","userdn":"ou=people,dc=allthingscloud,dc=eu"}'
 
@@ -388,7 +399,7 @@ install_vault () {
 install_vault
 create_namespaces
 configure_vault_ldap
-create_vault_policies
+create_vault_policies_for_namespace
 create_external_ldap_group_identities
 assign_vault_policies
 
