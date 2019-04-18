@@ -96,20 +96,20 @@ again. Future Vault requests will automatically use this token.
 
 Key                    Value
 ---                    -----
-token                  s.P0SKQFmbMLBlNeqLaPPHL9ci
-token_accessor         XHh14VYhfMwroutTE2FLpbG6
+token                  s.fusuYVYvDItb4XCG5tH9jtEl
+token_accessor         7WNnJZSycIXqyH7BqVQbOCxG
 token_duration         768h
 token_renewable        true
 token_policies         ["default"]
-identity_policies      ["facebook_admin" "shared_operator"]
-policies               ["default" "facebook_admin" "shared_operator"]
+identity_policies      ["shared_operator"]
+policies               ["default" "shared_operator"]
 token_meta_username    mpoppins
 ```
 
 Review the token details: 
 
 ``` bash
-vault token lookup s.P0SKQFmbMLBlNeqLaPPHL9ci
+vault token lookup s.fusuYVYvDItb4XCG5tH9jtEl
 ```
 
 Output:
@@ -117,24 +117,32 @@ Output:
 ``` bash
 Key                            Value
 ---                            -----
-accessor                       XHh14VYhfMwroutTE2FLpbG6
-creation_time                  1555366376
+accessor                       7WNnJZSycIXqyH7BqVQbOCxG
+creation_time                  1555597117
 creation_ttl                   768h
 display_name                   mydemoldapserver-mpoppins
-entity_id                      11bd523d-26a8-6f0e-d1a4-0ea4113a1c7e
-expire_time                    2019-05-17T22:12:56.292121251Z
+entity_id                      f84ca212-5b59-d701-8014-b08ed2dfe911
+expire_time                    2019-05-20T14:18:37.028917033Z
 explicit_max_ttl               0s
-external_namespace_policies    map[]
-id                             s.P0SKQFmbMLBlNeqLaPPHL9ci
-identity_policies              [facebook_admin shared_operator]
-issue_time                     2019-04-15T22:12:56.292120972Z
+external_namespace_policies    map[44KZv:[facebook_admin]]
+id                             s.fusuYVYvDItb4XCG5tH9jtEl
+identity_policies              [shared_operator]
+issue_time                     2019-04-18T14:18:37.028916833Z
 meta                           map[username:mpoppins]
 num_uses                       0
 orphan                         true
 path                           auth/mydemoldapserver/login/mpoppins
 policies                       [default]
 renewable                      true
-ttl                            767h58m49s
+ttl                            767h59m14s
 type                           service
 ```
+
+
+# TODO:
+
+- Write some meaningful policies (all messy at present)
+- Create shared secret example data
+- Add a control group to authorise secret changes
+- See if MFA is feasible from OKTA
 
