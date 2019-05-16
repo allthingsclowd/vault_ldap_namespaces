@@ -34,6 +34,7 @@ reset_crc_file_stamp() {
 install_and_configure_openldap () {
 
     echo "Starting OpenLDAP installation"
+    sudo apt-get update
     # Idempotent hack
     ldapsearch -x -LLL -h localhost -D cn=admin,dc=eu -w ${LDAPPASSWORD} -b "ou=groups,dc=allthingscloud,dc=eu"
     LDAP_CONFIGURED=$?
