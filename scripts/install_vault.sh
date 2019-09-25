@@ -4,9 +4,9 @@
 create_vault_policy () {
     
     if [[ "${5}" != "" ]]; then
-        POLICY_EXISTS=`curl -s -X GET -I -H "X-Vault-Token: reallystrongpassword" -H "X-Vault-Namespace: ${5}" -w "%{http_code}\n" -o /dev/null http://192.168.2.11:8200/v1/sys/policies/acl/${3}`
+        POLICY_EXISTS=`curl -s -X GET -I -H "X-Vault-Token: reallystrongpassword" -H "X-Vault-Namespace: ${5}" -w "%{http_code}\n" -o /dev/null http://192.168.15.11:8200/v1/sys/policies/acl/${3}`
     else
-        POLICY_EXISTS=`curl -s -X GET -I -H "X-Vault-Token: reallystrongpassword" -w "%{http_code}\n" -o /dev/null http://192.168.2.11:8200/v1/sys/policies/acl/${3}`
+        POLICY_EXISTS=`curl -s -X GET -I -H "X-Vault-Token: reallystrongpassword" -w "%{http_code}\n" -o /dev/null http://192.168.15.11:8200/v1/sys/policies/acl/${3}`
     fi
     
     
@@ -166,7 +166,7 @@ configure_vault_ldap () {
 
         # To test you LDAP config outside of Vault => ldapsearch -x -LLL -h localhost -D "cn=vaultuser,ou=people,dc=allthingscloud,dc=eu" -w vaultuser -b "ou=people,dc=allthingscloud,dc=eu" -s sub "(&(objectClass=inetOrgPerson)(uid=mpoppins))" memberOf
         
-        export LDAPCONFIG='{"binddn":"cn=vaultuser,ou=people,dc=allthingscloud,dc=eu","bindpass":"vaultuser","groupattr":"memberOf","groupdn":"ou=people,dc=allthingscloud,dc=eu","groupfilter":"(&(objectClass=inetOrgPerson)(uid={{.Username}}))","insecure_tls":"true","starttls":"false","url":"ldap://192.168.2.11:389","userattr":"uid","userdn":"ou=people,dc=allthingscloud,dc=eu"}'
+        export LDAPCONFIG='{"binddn":"cn=vaultuser,ou=people,dc=allthingscloud,dc=eu","bindpass":"vaultuser","groupattr":"memberOf","groupdn":"ou=people,dc=allthingscloud,dc=eu","groupfilter":"(&(objectClass=inetOrgPerson)(uid={{.Username}}))","insecure_tls":"true","starttls":"false","url":"ldap://192.168.15.11:389","userattr":"uid","userdn":"ou=people,dc=allthingscloud,dc=eu"}'
 
         curl \
             -X PUT \
@@ -302,9 +302,10 @@ setup_environment () {
     set -x
     echo 'Start Setup of Vault Environment'
     source /usr/local/bootstrap/var.env
+    
 
-    IFACE=`route -n | awk '$1 == "192.168.2.0" {print $8}'`
-    CIDR=`ip addr show ${IFACE} | awk '$2 ~ "192.168.2" {print $2}'`
+    IFACE=`route -n | awk '$1 == "192.168.15.0" {print $8}'`
+    CIDR=`ip addr show ${IFACE} | awk '$2 ~ "192.168.15" {print $2}'`
     IP=${CIDR%%/24}
 
     if [ -d /vagrant ]; then
@@ -318,8 +319,10 @@ setup_environment () {
     sudo chmod 777 /mnt/vault/data
     
     # Install Enterprise Binary
+    #VAULT_BINARY=vault-enterprise_1.2.0-beta1+prem_linux_amd64.zip
+    VAULT_BINARY=vault-enterprise_1.1.3+prem_linux_amd64.zip
     pushd /usr/local/bin
-    sudo unzip -o /usr/local/bootstrap/.hsm/vault-enterprise_1.1.1+prem_linux_amd64.zip
+    sudo unzip -o /usr/local/bootstrap/.hsm/${VAULT_BINARY}
     sudo chmod +x vault
     popd
     

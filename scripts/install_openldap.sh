@@ -98,7 +98,7 @@ setup_environment() {
     ETC_HOSTS=/etc/hosts
 
     # Default IP for hostname
-    IP="192.168.2.11"
+    IP="192.168.15.11"
 
     # Hostname to add/remove.
     HOSTNAME="allthingscloud.eu"

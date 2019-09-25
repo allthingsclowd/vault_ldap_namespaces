@@ -28,7 +28,7 @@ Requirements
 - Copy the Vault Enterprise zipfile into the .hsm directory
 - Source the var.env file
 - Vagrant up
-- Now Vault and LDAP should be available and integrated on the vagrant box - 192.168.2.11
+- Now Vault and LDAP should be available and integrated on the vagrant box - 192.168.15.11
 
 ``` bash
 mkdir LDAP_DEMO

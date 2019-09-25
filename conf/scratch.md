@@ -21,7 +21,7 @@ sudo /vagrant/scripts/install_vault.sh
 curl \
     --header "X-Vault-Token: ${VAULT_TOKEN}" \
     --header "X-Vault-Namespace: shared" \
-    http://192.168.2.11:8200/v1/secret/transit/test
+    http://192.168.15.11:8200/v1/secret/transit/test
 
 
 ----------------------------------------
@@ -97,7 +97,7 @@ curl \
     --header "X-Vault-Namespace: shared" \
     --request POST \
     -d "${ENCRYPTIONKEYCONFIG}" \
-    http://192.168.2.11:8200/v1/transit/keys/gjldemokey
+    http://192.168.15.11:8200/v1/transit/keys/gjldemokey
 ```
 
 Enable key deletion
@@ -112,7 +112,7 @@ curl \
     --header "X-Vault-Namespace: shared" \
     --request POST \
     -d "${ENABLEDELETION}" \
-    http://192.168.2.11:8200/v1/transit/keys/gjldemokey/config
+    http://192.168.15.11:8200/v1/transit/keys/gjldemokey/config
 ```
 
 Read the new transit key > Expecting a failure for this user
@@ -121,7 +121,7 @@ Read the new transit key > Expecting a failure for this user
 curl \
     --header "X-Vault-Token: ${VAULT_TOKEN}" \
     --header "X-Vault-Namespace: shared" \
-    http://192.168.2.11:8200/v1/transit/keys/gjldemokey
+    http://192.168.15.11:8200/v1/transit/keys/gjldemokey
 
 {"errors":["1 error occurred:\n\t* permission denied\n\n"]}
 ```
@@ -133,7 +133,7 @@ curl \
     --header "X-Vault-Token: ${VAULT_TOKEN}" \
     --header "X-Vault-Namespace: shared" \
     --request DELETE \
-    http://192.168.2.11:8200/v1/transit/keys/gjldemokey
+    http://192.168.15.11:8200/v1/transit/keys/gjldemokey
 
 {"errors":["1 error occurred:\n\t* permission denied\n\n"]}
 ```
@@ -157,7 +157,7 @@ ENCRYPTEDDATA=`curl \
     --header "X-Vault-Namespace: shared" \
     --request POST \
     -d "${ENCRYPTIONPACKAGE}" \
-    http://192.168.2.11:8200/v1/transit/encrypt/gjldemokey | jq -r ".data.ciphertext"`
+    http://192.168.15.11:8200/v1/transit/encrypt/gjldemokey | jq -r ".data.ciphertext"`
 ```
 
 Now let's swap over to the account with the read and delete capabilities
@@ -200,7 +200,7 @@ curl \
     --header "X-Vault-Namespace: shared" \
     --request POST \
     -d "${ENCRYPTIONKEYCONFIG}" \
-    http://192.168.2.11:8200/v1/transit/keys/gjldemokeytwo
+    http://192.168.15.11:8200/v1/transit/keys/gjldemokeytwo
 
 {"errors":["1 error occurred:\n\t* permission denied\n\n"]}
 ```
@@ -211,7 +211,7 @@ Now let's read the transit key with this account - this should succeed
 curl \
     --header "X-Vault-Token: ${VAULT_TOKEN}" \
     --header "X-Vault-Namespace: shared" \
-    http://192.168.2.11:8200/v1/transit/keys/gjldemokey
+    http://192.168.15.11:8200/v1/transit/keys/gjldemokey
 
 {"request_id":"0c09a4aa-e183-61f6-c302-8d35018c9b27","lease_id":"","renewable":false,"lease_duration":0,"data":{"allow_plaintext_backup":false,"deletion_allowed":true,"derived":false,"exportable":false,"keys":{"1":{"creation_time":"2019-05-15T19:37:29.081422045Z","name":"P-256","public_key":"-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUNFzN/Z13n9gIqHlQC5fSMySa8p6\nyT93s5OYRRLHRHXluB66yuS2xDt6hwv9xpVHTTmIRogoJvLt2vof3utaVg==\n-----END PUBLIC KEY-----\n"}},"latest_version":1,"min_available_version":0,"min_decryption_version":1,"min_encryption_version":0,"name":"gjldemokey","supports_decryption":false,"supports_derivation":false,"supports_encryption":false,"supports_signing":true,"type":"ecdsa-p256"},"wrap_info":null,"warnings":null,"auth":null}
 ```
@@ -228,7 +228,7 @@ DECRYPTEDDATA=`curl \
     --header "X-Vault-Namespace: shared" \
     --request POST \
     -d "${DECRYPTIONPACKAGE}" \
-    http://192.168.2.11:8200/v1/transit/decrypt/gjldemokey | jq -r ".data.plaintext"`
+    http://192.168.15.11:8200/v1/transit/decrypt/gjldemokey | jq -r ".data.plaintext"`
 ```
 
 Now all we need to do is unencode the base64 encoded package
@@ -244,7 +244,7 @@ curl \
     --header "X-Vault-Token: ${VAULT_TOKEN}" \
     --header "X-Vault-Namespace: shared" \
     --request DELETE \
-    http://192.168.2.11:8200/v1/transit/keys/gjldemokey
+    http://192.168.15.11:8200/v1/transit/keys/gjldemokey
 ```
 
 Success!!!!
