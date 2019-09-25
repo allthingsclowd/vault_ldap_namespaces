@@ -34,6 +34,7 @@ reset_crc_file_stamp() {
 install_and_configure_openldap () {
 
     echo "Starting OpenLDAP installation"
+    sudo apt-get update
     # Idempotent hack
     ldapsearch -x -LLL -h localhost -D cn=admin,dc=eu -w ${LDAPPASSWORD} -b "ou=groups,dc=allthingscloud,dc=eu"
     LDAP_CONFIGURED=$?
@@ -97,7 +98,7 @@ setup_environment() {
     ETC_HOSTS=/etc/hosts
 
     # Default IP for hostname
-    IP="192.168.2.11"
+    IP="192.168.15.11"
 
     # Hostname to add/remove.
     HOSTNAME="allthingscloud.eu"

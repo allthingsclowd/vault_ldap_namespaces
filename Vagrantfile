@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
   config.vm.hostname = "allthingscloud.eu"
   config.vm.provision "shell", inline: "/usr/local/bootstrap/scripts/install_openldap.sh", run: "always"
   config.vm.provision "shell", inline: "/usr/local/bootstrap/scripts/install_vault.sh", run: "always"
-  config.vm.network "private_network", ip: "192.168.2.11"
+  config.vm.network "private_network", ip: "192.168.15.11"
   config.vm.box = "allthingscloud/web-page-counter"
   config.vm.box_version = "0.2.1554410947"
 
