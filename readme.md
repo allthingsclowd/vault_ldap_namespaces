@@ -26,6 +26,7 @@ Requirements
 - Clone the repository to the host system from [github](git@github.com:allthingsclowd/vault_ldap_namespaces.git)
 - Create a .hsm directory in the root of this newly cloned repository
 - Copy the Vault Enterprise zipfile into the .hsm directory
+- Set the vault binary filename in the var.env file e.g. `export VAULT_BINARY=vault-enterprise_1.4.0-rc1+prem_linux_amd64.zip`
 - Source the var.env file
 - Vagrant up
 - Now Vault and LDAP should be available and integrated on the vagrant box - 192.168.15.11

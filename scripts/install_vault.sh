@@ -319,9 +319,6 @@ setup_environment () {
     sudo chmod 777 /mnt/vault/data
     
     # Install Enterprise Binary
-    #VAULT_BINARY=vault-enterprise_1.2.0-beta1+prem_linux_amd64.zip
-    #VAULT_BINARY=vault-enterprise_1.3.2+prem_linux_amd64.zip
-    VAULT_BINARY=vault-enterprise_1.4.0-rc1+prem_linux_amd64.zip
     pushd /usr/local/bin
     sudo unzip -o /usr/local/bootstrap/.hsm/${VAULT_BINARY}
     sudo chmod +x vault
